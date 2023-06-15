@@ -1,9 +1,9 @@
+use color_eyre::eyre::Error;
 use color_eyre::Result;
 use std::env::var;
 use std::fs;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-use color_eyre::eyre::Error;
 
 fn main() -> Result<()> {
     build_java()
@@ -15,10 +15,7 @@ pub fn build_java() -> Result<()> {
     let manifest_dir = PathBuf::from(var("CARGO_MANIFEST_DIR")?);
     run_gradle_command("shadowjar")?;
 
-    let builddir = manifest_dir
-        .join("java")
-        .join("build")
-        .join("libs");
+    let builddir = manifest_dir.join("java").join("build").join("libs");
 
     let outjar = fs::read_dir(builddir)?
         .into_iter()
