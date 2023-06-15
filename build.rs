@@ -1,9 +1,9 @@
 use color_eyre::eyre::Error;
 use color_eyre::Result;
 use std::env::var;
-use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::{fs, io};
 
 fn main() -> Result<()> {
     build_java()
@@ -13,9 +13,14 @@ pub fn build_java() -> Result<()> {
     println!("cargo:rerun-if-changed=java");
 
     let manifest_dir = PathBuf::from(var("CARGO_MANIFEST_DIR")?);
-    run_gradle_command("shadowjar")?;
+    let outdir = PathBuf::from(var("OUT_DIR")?);
+    let java_outdir = outdir.join("java");
 
-    let builddir = manifest_dir.join("java").join("build").join("libs");
+    copy_dir_all(manifest_dir.join("java"), &java_outdir)?;
+
+    run_gradle_command("shadowjar", &java_outdir)?;
+
+    let builddir = java_outdir.join("build").join("libs");
 
     let outjar = fs::read_dir(builddir)?
         .into_iter()
@@ -33,20 +38,17 @@ pub fn build_java() -> Result<()> {
         .ok_or(Error::msg("Could not find output jar"))?
         .path();
 
-    let outdir = PathBuf::from(var("OUT_DIR")?);
     fs::copy(outjar, outdir.join("dependencies.jar"))?;
 
-    run_gradle_command("clean")?;
+    run_gradle_command("clean", &java_outdir)?;
 
     Ok(())
 }
 
-fn run_gradle_command(cmd: &str) -> Result<()> {
-    let manifest_dir = PathBuf::from(var("CARGO_MANIFEST_DIR")?);
-
+fn run_gradle_command(cmd: &str, java_dir: &Path) -> Result<()> {
     let output = Command::new("./gradlew")
         .arg(cmd)
-        .current_dir(manifest_dir.join("java").canonicalize()?)
+        .current_dir(java_dir)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?
@@ -62,4 +64,18 @@ fn run_gradle_command(cmd: &str) -> Result<()> {
 
         Err(Error::msg("Building Java dependency failed"))
     }
+}
+
+fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> {
+    fs::create_dir_all(&dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        if ty.is_dir() {
+            copy_dir_all(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        } else {
+            fs::copy(entry.path(), dst.as_ref().join(entry.file_name()))?;
+        }
+    }
+    Ok(())
 }
