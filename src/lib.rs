@@ -1,3 +1,20 @@
+//! # tracing-slf4j
+//! SLF4j backend compatible with Rust's tracing crate.
+//! Allows Java programs started from your program to log their logs to Rust's tracing.
+//!
+//! ## Usage
+//! When using JNI's invocation API, the JAR file embedded in this crate
+//! should be added to the classpath:
+//!
+//! 1. Save the jarfile (const `tracing_slf4j::DEPENDENCIES`) to disk
+//! 2. Add the option `-Djava.class.path=<PATH TO JARFILE>` to the JVM's start parameters.
+//!
+//! After the JVM has been started, the setup `register_log_fn` function should be called:
+//! ```ignore
+//! tracing_slf4j::register_log_fn(&mut env).unwrap();
+//! ```
+//! This function will register the Rust logging handler with the JVM.
+
 use std::ffi::{c_void, CString};
 use jni::{JNIEnv, NativeMethod};
 use jni::objects::{JClass, JString};
@@ -6,6 +23,7 @@ use jni::sys::jint;
 use jni::errors::Result;
 use tracing::{debug, error, info, trace, warn};
 
+/// Java side of the 'bridge'
 pub const DEPENDENCIES: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/dependencies.jar"));
 
 #[no_mangle]
@@ -29,6 +47,11 @@ extern "system" fn tracing_slf4j_impl(mut env: JNIEnv<'_>, _class: JClass<'_>, l
     }
 }
 
+/// Registry the native logging function with the JVM so it can be called by the logging framework.
+///
+/// # Errors
+///
+/// If registering the native method fails
 pub fn register_log_fn(env: &mut JNIEnv<'_>) -> Result<()> {
     let logger_class = env.find_class("nl/mrfriendly/tracing/TracingSlf4jImpl")?;
 

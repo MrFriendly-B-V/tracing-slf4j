@@ -2,6 +2,13 @@
 name = "tracing-slf4j"
 version = "0.1.0"
 edition = "2021"
+authors = ["Tobias de Bruijn <t.debruijn@array21.dev>"]
+description = "SLF4j backend compatible with Rust's tracing"
+readme = "./README.md"
+repository = "https://github.com/MrFriendly-B-V/tracing-slf4j"
+license = "MIT OR Apache-2.0"
+keywords = ["SLF4j", "logging", "java", "tracing"]
+categories = ["api-bindings"]
 
 [dependencies]
 jni = "0.21.1"

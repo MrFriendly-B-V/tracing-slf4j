@@ -6,7 +6,7 @@ The purpose of this crate is to allow Rust programs that embed Java programs to 
 the Java parts, if those parts are using SLF4j.
 
 ## Compiling
-This crate requires a Java compiler installer. the `JAVA_HOME` environmental variable should be set.
+This crate requires a Java compiler installed. the `JAVA_HOME` environmental variable should be set.
 
 ## Usage
 When using JNI's invocation API, the JAR file embedded in this crate
