@@ -59,7 +59,9 @@ fn gradle_command_name() -> &'static str {
 }
 
 fn run_gradle_command(cmd: &str, java_dir: &Path) -> Result<()> {
-    let output = Command::new(gradle_command_name())
+    let program = java_dir.join(gradle_command_name());
+
+    let output = Command::new(&program)
         .arg(cmd)
         .current_dir(java_dir)
         .stdout(Stdio::piped())
