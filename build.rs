@@ -51,7 +51,7 @@ fn gradle_command_name() -> &'static str {
         if #[cfg(unix)] {
             "./gradlew"
         } else if #[cfg(windows)] {
-            "./gradlew.bat"
+            "gradlew.bat"
         } else {
             compiler_error!("Platform not supported");
         }
