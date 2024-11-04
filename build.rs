@@ -4,6 +4,7 @@ use std::env::var;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::{fs, io};
+use cfg_if::cfg_if;
 
 fn main() -> Result<()> {
     build_java()
@@ -45,8 +46,20 @@ pub fn build_java() -> Result<()> {
     Ok(())
 }
 
+fn gradle_command_name() -> &'static str {
+    cfg_if! {
+        if #[cfg(unix)] {
+            "./gradlew"
+        } else if #[cfg(windows)] {
+            "./gradlew.bat"
+        } else {
+            compiler_error!("Platform not supported");
+        }
+    }
+}
+
 fn run_gradle_command(cmd: &str, java_dir: &Path) -> Result<()> {
-    let output = Command::new("./gradlew")
+    let output = Command::new(gradle_command_name())
         .arg(cmd)
         .current_dir(java_dir)
         .stdout(Stdio::piped())
